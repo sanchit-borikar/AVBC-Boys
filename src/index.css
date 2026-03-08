@@ -267,6 +267,21 @@
   6%, 12% { transform: rotate(10deg); }
 }
 
+@keyframes flagPulse {
+  0%   { opacity: 0.15; transform: scale(1); }
+  50%  { opacity: 0.35; transform: scale(1.15); }
+  100% { opacity: 0.15; transform: scale(1); }
+}
+
+@keyframes progressBarFill {
+  from { width: 0; }
+}
+
+.flagged-glow-pulse {
+  animation: flagPulse 2s ease-in-out infinite;
+  transform-origin: center center;
+}
+
 /* Leaflet overrides */
 .leaflet-container {
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -275,9 +290,22 @@
 .leaflet-popup-content-wrapper {
   border-radius: 12px !important;
   box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+  border: 1px solid #e2e8f0 !important;
   padding: 0 !important;
+  overflow: hidden !important;
 }
 .leaflet-popup-content {
   margin: 0 !important;
-  min-width: 260px;
+  min-width: 280px;
+  width: 280px !important;
+}
+.leaflet-popup-close-button {
+  z-index: 10 !important;
+  color: white !important;
+  font-size: 18px !important;
+  top: 6px !important;
+  right: 8px !important;
+}
+.leaflet-popup-close-button:hover {
+  color: #e2e8f0 !important;
 }

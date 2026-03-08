@@ -8,9 +8,10 @@ import { toast } from "sonner";
 
 const navItems = [
   { path: "/dashboard", label: "Overview", icon: Home },
-  { path: "/dashboard/map", label: "Live Map", icon: Map },
-  { path: "/dashboard/profiles", label: "Profiles", icon: Building2 },
-  { path: "/dashboard/data", label: "Data & Verify", icon: BarChart3 },
+   { path: "/dashboard/map", label: "Live Emission Map", icon: Map },
+    { path: "/dashboard/map", label: "Rankings", icon: Map },
+  { path: "/dashboard/profiles", label: "Agency Profiles", icon: Building2 },
+  { path: "/dashboard/data", label: "Data & Verification", icon: BarChart3 },
   { path: "/dashboard/alerts", label: "Alerts & Reports", icon: AlertTriangle, regulatorOnly: true },
   { path: "/dashboard/company", label: "My Company", icon: Factory, companyOnly: true },
   { path: "/dashboard/analytics", label: "Analytics", icon: TrendingUp },
