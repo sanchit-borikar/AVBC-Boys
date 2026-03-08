@@ -5,12 +5,138 @@ import HashDisplay from "@/components/HashDisplay";
 import SkeletonLoader from "@/components/SkeletonLoader";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { generateHourlyData } from "@/data/mockData";
+import { Copy, Save } from "lucide-react";
+import { toast } from "sonner";
+
+const IPCC_FACTORS: Record<string, number> = {
+  "PM2.5": 110,
+  "PM10":  50,
+  "NO2":   298,
+  "SO2":   132,
+  "CO":    1,
+  "CO2":   1,
+  "NOx":   298,
+  "CH4":   25,
+  "N2O":   298
+};
+
+const UNIT_CONVERSION: Record<string, number> = {
+  "μg/m³": 1,
+  "ppm":   1000,
+  "ppb":   1,
+  "mg/m³": 1000,
+  "kg":    1000000,
+  "tonnes":1000000000,
+  "kWh":   820,
+  "MWh":   820000
+};
+
+const SECTOR_MULTIPLIERS: Record<string, number> = {
+  "Industrial": 1.2,
+  "Transport":  1.0,
+  "Energy":     0.9
+};
+
+const WHO_LIMITS: Record<string, number> = {
+  "PM2.5": 25,
+  "PM10":  50,
+  "NO2":   40,
+  "SO2":   20,
+  "CO":    4000
+};
+
+const CPCB_LIMITS: Record<string, number> = {
+  "PM2.5": 60,
+  "PM10":  100,
+  "NO2":   80,
+  "SO2":   80,
+  "CO":    2000
+};
 
 export default function DataVerificationPage() {
   const { companies } = useSocketSimulator();
   const [loading, setLoading] = useState(true);
   const [sourceTab, setSourceTab] = useState(0);
   const hourlyData = generateHourlyData();
+
+  const [calcPollutant, setCalcPollutant] = useState("PM2.5");
+  const [calcValue, setCalcValue] = useState("");
+  const [calcUnit, setCalcUnit] = useState("μg/m³");
+  const [calcSector, setCalcSector] = useState("Industrial");
+  const [calcResult, setCalcResult] = useState<{
+    co2e: number;
+    formula: string;
+    ipccFactor: number;
+    sectorMultiplier: number;
+  } | null>(null);
+  const [calcError, setCalcError] = useState("");
+
+  const handleCalculate = () => {
+    const val = parseFloat(calcValue);
+    if (isNaN(val) || val <= 0) {
+      setCalcError("Please enter a valid positive number");
+      setCalcResult(null);
+      return;
+    }
+    setCalcError("");
+
+    const valueInUg = val * (UNIT_CONVERSION[calcUnit] || 1);
+    const ipcc = IPCC_FACTORS[calcPollutant] || 1;
+    const secMult = SECTOR_MULTIPLIERS[calcSector] || 1;
+
+    const co2e = valueInUg * ipcc * secMult;
+
+    const formattedVal = val.toString();
+    const formattedCo2e = Number(co2e.toFixed(2)).toLocaleString("en-US", { maximumFractionDigits: 2 });
+    
+    const formula = `${formattedVal} ${calcUnit} × ${ipcc} ${secMult !== 1 ? `× ${secMult} ` : ""}= ${formattedCo2e}`;
+
+    setCalcResult({
+      co2e: Number(co2e.toFixed(2)),
+      formula,
+      ipccFactor: ipcc,
+      sectorMultiplier: secMult
+    });
+  };
+
+  const handleCopyResult = () => {
+    if (calcResult) {
+      navigator.clipboard.writeText(calcResult.co2e.toString());
+      toast.success("Result copied to clipboard");
+    }
+  };
+
+  const handleSaveToReport = async () => {
+    if (!calcResult) return;
+    
+    const payload = {
+      pollutant: calcPollutant,
+      raw_value: parseFloat(calcValue),
+      unit: calcUnit,
+      sector: calcSector,
+      co2e: calcResult.co2e,
+      ipcc_factor: calcResult.ipccFactor,
+      formula: calcResult.formula,
+      standard: "IPCC AR6 2023",
+      timestamp: new Date().toISOString(),
+      source: "manual_calculator"
+    };
+
+    try {
+      const res = await fetch("http://localhost:8000/api/manual-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error("API failed");
+      toast.success("✓ Report saved successfully", { duration: 3000 });
+    } catch (e) {
+      toast.error("✗ Failed to save — using local storage", { duration: 3000 });
+      const existing = JSON.parse(localStorage.getItem("manual_reports") || "[]");
+      existing.push(payload);
+      localStorage.setItem("manual_reports", JSON.stringify(existing));
+    }
+  };
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 800);
@@ -139,14 +265,128 @@ export default function DataVerificationPage() {
           {/* GHG Calculator */}
           <div className="card-dashboard p-5 border-t-[3px] border-t-warning">
             <h3 className="text-sm font-semibold text-foreground mb-1">⚗️ GHG Protocol Calculator</h3>
-            <p className="text-[10px] text-muted-foreground mb-3">Convert raw readings to standardized CO₂e</p>
-            <div className="flex gap-2 mb-3">
-              <input type="number" className="flex-1 px-3 py-2 border border-input rounded-lg text-sm outline-none" placeholder="Value" />
-              <select className="px-2 py-2 border border-input rounded-lg text-xs outline-none bg-card">
-                <option>ppm</option><option>ppb</option><option>μg·m⁻³</option><option>mg·m⁻³</option>
-              </select>
+            <p className="text-[10px] text-muted-foreground mb-4">Convert raw readings to standardized CO₂e</p>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Pollutant Type</label>
+                <select 
+                  className="w-full px-3 py-2 border border-input rounded-lg text-sm outline-none bg-card"
+                  value={calcPollutant}
+                  onChange={(e) => setCalcPollutant(e.target.value)}
+                >
+                  <option value="PM2.5">PM2.5</option><option value="PM10">PM10</option><option value="NO2">NO2</option><option value="SO2">SO2</option><option value="CO">CO</option><option value="CO2">CO2</option><option value="NOx">NOx</option><option value="CH4">CH4 (Methane)</option><option value="N2O">N2O (Nitrous Oxide)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Raw Value</label>
+                <input 
+                  type="number" 
+                  min="0"
+                  className={`w-full px-3 py-2 border rounded-lg text-sm outline-none bg-card transition-colors ${calcError ? "border-danger focus:border-danger" : "border-input focus:border-primary"}`} 
+                  placeholder="Enter value" 
+                  value={calcValue}
+                  onChange={(e) => {
+                    setCalcValue(e.target.value);
+                    if (calcError) setCalcError("");
+                  }}
+                />
+                {calcError && <p className="text-[10px] text-danger mt-1">{calcError}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Unit</label>
+                <select 
+                  className="w-full px-3 py-2 border border-input rounded-lg text-sm outline-none bg-card"
+                  value={calcUnit}
+                  onChange={(e) => setCalcUnit(e.target.value)}
+                >
+                  <option value="μg/m³">μg/m³</option><option value="ppm">ppm</option><option value="ppb">ppb</option><option value="mg/m³">mg/m³</option><option value="kg">kg</option><option value="tonnes">tonnes</option><option value="kWh">kWh</option><option value="MWh">MWh</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Sector</label>
+                <select 
+                  className="w-full px-3 py-2 border border-input rounded-lg text-sm outline-none bg-card"
+                  value={calcSector}
+                  onChange={(e) => setCalcSector(e.target.value)}
+                >
+                  <option value="Industrial">Industrial</option><option value="Transport">Transport</option><option value="Energy">Energy</option>
+                </select>
+              </div>
+
+              <button 
+                onClick={handleCalculate}
+                className="w-full flex items-center justify-center font-semibold text-white rounded-[8px] transition-opacity hover:opacity-90" 
+                style={{ background: "#f97316", height: "44px" }}
+              >
+                Calculate CO2e
+              </button>
             </div>
-            <div className="bg-warning btn-primary-gradient w-full py-2 text-center text-xs font-semibold" style={{ background: "linear-gradient(135deg, #d97706, #b45309)" }}>Calculate</div>
+
+            {calcResult && (
+              <div className="mt-4 p-4 rounded-lg bg-[#f0fdf4] border border-[#bbf7d0]">
+                <div className="mb-3">
+                  <p className="text-[11px] font-semibold text-[#15803d] uppercase tracking-wider mb-1">CO2e Equivalent</p>
+                  <div className="text-[28px] font-bold text-[#15803d] leading-none mb-1">
+                    {calcResult.co2e.toLocaleString()} <span className="text-sm font-normal">μg/m³</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1 mb-4">
+                  <p className="text-[12px] font-mono text-[#64748b]">Formula: {calcResult.formula}</p>
+                  <p className="text-[11px] text-[#94a3b8]">Standard: IPCC AR6 2023</p>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  {(() => {
+                    const limit = WHO_LIMITS[calcPollutant];
+                    if (!limit) return null;
+                    const exceeds = calcResult.co2e > limit;
+                    return (
+                      <div className={`p-2 rounded border text-xs font-medium ${exceeds ? "bg-[#fef2f2] border-[#fecaca] text-[#ef4444]" : "bg-[#f0fdf4] border-[#bbf7d0] text-[#22c55e]"}`}>
+                        {exceeds ? "⚠ Exceeds WHO limit" : "✓ Within WHO limit"} <span className="opacity-80 font-normal"> <br/>(limit: {limit.toLocaleString()} μg/m³)</span>
+                      </div>
+                    );
+                  })()}
+                  
+                  {(() => {
+                    const limit = CPCB_LIMITS[calcPollutant];
+                    if (!limit) return null;
+                    const exceeds = calcResult.co2e > limit;
+                    return (
+                      <div className={`p-2 rounded border text-xs font-medium ${exceeds ? "bg-[#fef2f2] border-[#fecaca] text-[#ef4444]" : "bg-[#f0fdf4] border-[#bbf7d0] text-[#22c55e]"}`}>
+                        {exceeds ? "⚠ Exceeds CPCB limit" : "✓ Within CPCB limit"} <span className="opacity-80 font-normal"> <br/>(limit: {limit.toLocaleString()} μg/m³)</span>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="flex gap-2 mb-3">
+                  <button onClick={handleCopyResult} className="flex-1 py-1.5 px-3 bg-white border border-[#bbf7d0] rounded-md text-xs font-semibold text-[#15803d] flex items-center justify-center gap-1.5 hover:bg-green-50 transition-colors">
+                    <Copy size={14} /> Copy Result
+                  </button>
+                  <button onClick={handleSaveToReport} className="flex-1 py-1.5 px-3 bg-[#15803d] text-white rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-[#166534] transition-colors">
+                    <Save size={14} /> Save to Report
+                  </button>
+                </div>
+
+                <div className="text-center mt-3">
+                  <button 
+                    onClick={() => {
+                      setCalcResult(null);
+                      setCalcValue("");
+                      setCalcError("");
+                    }} 
+                    className="text-[11px] font-medium text-[#64748b] hover:text-[#0f172a] transition-colors"
+                  >
+                    ← Calculate another
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
