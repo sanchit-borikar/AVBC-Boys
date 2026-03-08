@@ -15,6 +15,7 @@ import LiveMapPage from "./pages/dashboard/LiveMapPage";
 import ProfilesPage from "./pages/dashboard/ProfilesPage";
 import ComplianceDetailPage from "./pages/dashboard/ComplianceDetailPage";
 import DataVerificationPage from "./pages/dashboard/DataVerificationPage";
+import RankingsPage from "./pages/dashboard/RankingsPage";
 import AlertsPage from "./pages/dashboard/AlertsPage";
 import MyCompanyPage from "./pages/dashboard/MyCompanyPage";
 import AnalyticsPage from "./pages/dashboard/AnalyticsPage";
@@ -43,6 +44,7 @@ function AppRoutes() {
         <Route path="profiles" element={<ProfilesPage />} />
         <Route path="profiles/:id" element={<ComplianceDetailPage />} />
         <Route path="data" element={<DataVerificationPage />} />
+        <Route path="rankings" element={<RankingsPage />} />
         <Route path="alerts" element={<AlertsPage />} />
         <Route path="company" element={<MyCompanyPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />

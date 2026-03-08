@@ -3,6 +3,19 @@ import { useSocketSimulator } from "@/hooks/useSocketSimulator";
 export default function LiveTicker() {
   const { liveFeed } = useSocketSimulator();
 
+  const emissionTickerItems = [
+    { text: "Delhi Industrial — CO2e 13,695 μg/m³ — VIOLATION", type: "flagged" },
+    { text: "Blockchain TX OUXORCLW... anchored — Score 25", type: "blockchain" },
+    { text: "Kolkata anomaly detected — 3x normal level", type: "flagged" },
+    { text: "47 active WHO violations across 188 cities", type: "verified" },
+    { text: "LSTM forecast: Delhi PM2.5 reaches 109 μg/m³ in 90d", type: "score_change" },
+    { text: "Mumbai Transport verified — Score 42 WARNING", type: "score_change" },
+    { text: "3,241 records anchored on Algorand blockchain", type: "blockchain" },
+    { text: "Chennai Energy compliant — Score 71 CLEAN", type: "verified" },
+    { text: "OpenAQ: 1,247 readings ingested in last hour", type: "verified" },
+    { text: "NASA GEOS-CF: Satellite data verified ✓", type: "verified" },
+  ];
+
   const getDot = (type: string) => {
     switch (type) {
       case "verified": return "🔵";
@@ -13,7 +26,7 @@ export default function LiveTicker() {
     }
   };
 
-  const tickerText = liveFeed.slice(0, 15).map((f) => `${getDot(f.type)} ${f.text}`).join(" · ");
+  const tickerText = emissionTickerItems.map((f) => `${getDot(f.type)} ${f.text}`).join(" · ");
   const doubled = tickerText + " · " + tickerText;
 
   return (

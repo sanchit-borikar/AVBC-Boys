@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Globe, Home, Map, Building2, BarChart3, AlertTriangle, Factory, TrendingUp, Settings, LogOut, Bell, Search, Menu, X } from "lucide-react";
+import { Globe, Home, Map, Building2, BarChart3, AlertTriangle, Factory, TrendingUp, Settings, LogOut, Bell, Search, Menu, X, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import LiveTicker from "@/components/LiveTicker";
 import { useSocketSimulator } from "@/hooks/useSocketSimulator";
@@ -11,6 +11,7 @@ const navItems = [
   { path: "/dashboard/map", label: "Live Map", icon: Map },
   { path: "/dashboard/profiles", label: "Profiles", icon: Building2 },
   { path: "/dashboard/data", label: "Data & Verify", icon: BarChart3 },
+  { path: "/dashboard/rankings", label: "Rankings", icon: Trophy },
   { path: "/dashboard/alerts", label: "Alerts & Reports", icon: AlertTriangle, regulatorOnly: true },
   { path: "/dashboard/company", label: "My Company", icon: Factory, companyOnly: true },
   { path: "/dashboard/analytics", label: "Analytics", icon: TrendingUp },
