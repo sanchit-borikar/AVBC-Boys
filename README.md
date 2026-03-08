@@ -1,10 +1,6 @@
 # VayuDrishti 🌍
 ### Carbon Emission Tracking & Public Accountability Platform
 
-> *"Vayu" means Air. "Drishti" means Vision. Together — **the eye that watches the air.***
-
----
-
 ## The Problem
 
 Every year, thousands of factories, power plants, and vehicle fleets release millions of tonnes of carbon into the atmosphere.
