@@ -12,6 +12,7 @@ const navItems = [
   { path: "/dashboard/profiles", label: "Profiles", icon: Building2 },
   { path: "/dashboard/data", label: "Data & Verify", icon: BarChart3 },
   { path: "/dashboard/rankings", label: "Rankings", icon: Trophy },
+  
   { path: "/dashboard/alerts", label: "Alerts & Reports", icon: AlertTriangle, regulatorOnly: true },
   { path: "/dashboard/company", label: "My Company", icon: Factory, companyOnly: true },
   { path: "/dashboard/analytics", label: "Analytics", icon: TrendingUp },
