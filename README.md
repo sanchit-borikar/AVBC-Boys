@@ -239,19 +239,6 @@ npm install
 npm run dev
 ```
 
----
-
-## Environment Variables
-
-```env
-VITE_API_URL=http://localhost:8000
-VITE_SOCKET_URL=http://localhost:3001
-VITE_POLYGON_RPC=https://polygon-rpc.com
-VITE_MAPBOX_TOKEN=your_mapbox_token
-```
-
----
-
 ## License
 
 Built for **Endor Environmental Alliance** · SDG 13 Climate Action Platform
